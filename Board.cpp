@@ -1,64 +1,80 @@
 #include "Board.hpp"
+#include <vector>
 #include <iostream>
-using namespace std;
 
 Board::Board() {
-    turn = 0;
-    for (int j=0; j<nplayers; j++) {
-        board[j] = 0;
+    for (int i=0; i<N_PLAYERS+2; ++i) {
+        board[i] = INITIAL_STATE[i];
     }
 }
 
-void Board::disp() {
-    // debug: print bitboards
-    for (int j=0; j<nplayers; j++) {
-        for (int i=0; i<nsquares; i++) {
-            cout << ((board[j] >> i) & 1);
-        }
-        cout << endl;
-    }
-
-    for (int i=0; i<nsquares; i++) {
-        bool occupied = 0;
-        for (int j=0; j<nplayers; j++) {
-            if ((board[j] >> i) & 1) {
-                cout << players[j];
-                occupied = 1;
-                break;
-            }
-        }
-        if (!occupied) {
-            cout << empty;
-        }
-        unsigned long long prod = 1;
-        for (int dim : dims) {
-            prod *= dim;
-            if ((i+1)%prod==0) {
-                cout << endl;
-            }
-        }
+Board::Board(const Board *_board) {
+    for (int i=0; i<N_PLAYERS+2; ++i) {
+        board[i] = _board->board[i];
     }
 }
 
-vector<int> Board::moves() {
-    vector<int> moves;
-    for (int i=0; i<nsquares; i++) {
-        bool occupied = 0;
-        for (int j=0; j<nplayers; j++) {
-            if ((board[j] >> i) & 1) {
-                occupied = 1;
-                break;
-            }
-        }
-        if (!occupied) {
-            moves.push_back(i);
+std::vector<int> Board::getMoves() {
+    std::vector<int> moves;
+    for (int j=0; j<N_SQUARES; ++j) {
+        if ((board[2] >> j) & 1) {
+            moves.push_back(j);
         }
     }
     return moves;
 }
 
 void Board::move(int square) {
-    cout << '(' << turn << ',' << (1<<square) << ')' << endl;
-    board[turn] |= (1 << square);
-    turn = (turn + 1) % nplayers;
+    bool turn = board[3] | 0;
+    std::cout << '(' << turn << ',' << square << ')' << std::endl;
+
+    board[turn] |= 1 << square;
+    board[2] &= ~(1 << square);
+    board[3] = ~board[3];
+
+    // update state
+    for (Bitboard line : LINES) {
+        if ((board[turn] & line) == line) {
+            state = turn + 1;
+            return;
+        }
+    }
+    if (board[2] == 0) {
+        state = 3;
+    }
+}
+
+void Board::disp() {
+    // debug: print moves
+    std::vector<int> moves = getMoves();
+    for (int move : moves) {
+        std::cout << move << ' ';
+    }
+    std::cout << std::endl;
+
+    // debug: print bitboards
+    for (int i=0; i<N_PLAYERS+2; ++i) {
+        for (int j=0; j<N_SQUARES; ++j) {
+            std::cout << ((board[i] >> j) & 1);
+        }
+        std::cout << std::endl;
+    }
+
+    // print board
+    for (int j=0; j<N_SQUARES; ++j) {
+        for (int i=0; i<N_PLAYERS+1; ++i) {
+            if ((board[i] >> j) & 1) {
+                std::cout << PIECES[i];
+                break;
+            }
+        }
+
+        int prod = 1;
+        for (int dim : DIMS) {
+            prod *= dim;
+            if ((j + 1) % prod == 0) {
+                std::cout << std::endl;
+            }
+        }
+    }
 }
