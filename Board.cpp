@@ -26,11 +26,10 @@ std::vector<int> Board::getMoves() {
 
 void Board::move(int square) {
     bool turn = board[3] | 0;
-    std::cout << '(' << turn << ',' << square << ')' << std::endl;
-
     board[turn] |= 1 << square;
     board[2] &= ~(1 << square);
     board[3] = ~board[3];
+    //std::cout << '(' << turn << ',' << square << ')' << std::endl;
 
     // update state
     for (Bitboard line : LINES) {
@@ -45,6 +44,7 @@ void Board::move(int square) {
 }
 
 void Board::disp() {
+    /*
     // debug: print moves
     std::vector<int> moves = getMoves();
     for (int move : moves) {
@@ -59,6 +59,7 @@ void Board::disp() {
         }
         std::cout << std::endl;
     }
+    */
 
     // print board
     for (int j=0; j<N_SQUARES; ++j) {
